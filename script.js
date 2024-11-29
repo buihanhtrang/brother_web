@@ -20,6 +20,13 @@ form.addEventListener('submit', async function (event) {
   const SHEET_URL = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A1:append?valueInputOption=USER_ENTERED&key=${API_KEY}`;
 
   // Gửi dữ liệu lên Google Sheets
+  // const response = await fetch(SHEET_URL, {
+  //   method: "POST",
+  //   headers: { "Content-Type": "application/json" },
+  //   body: JSON.stringify({
+  //     values: [[name, age, budget, hobby, suggestion]]
+  //   })
+  // });
   const response = await fetch(SHEET_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -27,7 +34,15 @@ form.addEventListener('submit', async function (event) {
       values: [[name, age, budget, hobby, suggestion]]
     })
   });
-
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Error:", errorData);
+    alert(`Không thể lưu dữ liệu: ${errorData.error.message}`);
+  } else {
+    alert("Lưu dữ liệu thành công!");
+  }
+  
   // Hiển thị kết quả hoặc báo lỗi
   const resultsDiv = document.getElementById('results');
   if (response.ok) {
