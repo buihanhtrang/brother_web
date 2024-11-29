@@ -27,6 +27,7 @@ form.addEventListener('submit', async function (event) {
   //     values: [[name, age, budget, hobby, suggestion]]
   //   })
   // });
+
   const response = await fetch(SHEET_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
