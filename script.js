@@ -1,8 +1,9 @@
-// Cấu hình OAuth2 Client ID và Scopes
-const CLIENT_ID = '77620120608-m510ihhikvqag0e61598g7c2asjrdrse.apps.googleusercontent.com'; // Thay bằng Client ID từ Google Cloud
-const API_KEY = 'AIzaSyAAvdPrQLTNNHDE_jgVwH0GrWoApFXtoTc'; // Thay bằng API Key từ Google Cloud
+// Cấu hình OAuth2 Client ID, API Key và ID của Google Sheets
+const CLIENT_ID = '77620120608-m510ihhikvqag0e61598g7c2asjrdrse.apps.googleusercontent.com';
+const CLIENT_SECRET = 'YOUR_CLIENT_SECRET'; // Thay bằng Client Secret từ Google Cloud
+const API_KEY = 'AIzaSyAAvdPrQLTNNHDE_jgVwH0GrWoApFXtoTc';
 const SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
-const SHEET_ID = '16bi8IFW5dVh9tc_l4oDYJ3l7y1OspMPQAO9w28BUed0'; // Thay bằng ID của Google Sheets
+const SHEET_ID = '16bi8IFW5dVh9tc_l4oDYJ3l7y1OspMPQAO9w28BUed0';
 
 let accessToken = null;
 
@@ -10,13 +11,13 @@ let accessToken = null;
 function initGoogleSignIn() {
   google.accounts.id.initialize({
     client_id: CLIENT_ID,
-    callback: handleCredentialResponse, // Callback khi người dùng nhấn nút đăng nhập
+    callback: handleCredentialResponse,
   });
 
   // Hiển thị nút đăng nhập
   google.accounts.id.renderButton(
     document.getElementById('googleSignInButton'),
-    { theme: 'outline', size: 'large' } // Cấu hình nút
+    { theme: 'outline', size: 'large' }
   );
 
   // Hiển thị nhắc nhở đăng nhập nếu cần
@@ -24,15 +25,21 @@ function initGoogleSignIn() {
 }
 
 // Xử lý phản hồi đăng nhập
-function handleCredentialResponse(response) {
+async function handleCredentialResponse(response) {
   console.log('ID Token:', response.credential);
-  alert('Đăng nhập thành công!');
+
+  // Lấy Access Token từ ID Token
+  await fetchAccessToken(response.credential);
+
+  if (accessToken) {
+    alert('Đăng nhập thành công!');
+    sessionStorage.setItem('loggedIn', true); // Lưu trạng thái đăng nhập
+  } else {
+    alert('Không thể đăng nhập. Vui lòng thử lại!');
+  }
 }
 
-// Khởi tạo Google Sign-In khi trang được tải
-window.onload = initGoogleSignIn;
-
-// Lấy Access Token
+// Lấy Access Token từ ID Token
 async function fetchAccessToken(idToken) {
   try {
     const response = await fetch('https://oauth2.googleapis.com/token', {
@@ -40,18 +47,23 @@ async function fetchAccessToken(idToken) {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         client_id: CLIENT_ID,
-        client_secret: 'YOUR_CLIENT_SECRET', // Thay bằng Client Secret từ Google Cloud
+        client_secret: CLIENT_SECRET,
         grant_type: 'authorization_code',
         redirect_uri: 'postmessage',
         code: idToken,
       }),
     });
+
     const data = await response.json();
-    accessToken = data.access_token;
-    console.log('Access Token:', accessToken);
+
+    if (data.access_token) {
+      accessToken = data.access_token;
+      console.log('Access Token:', accessToken);
+    } else {
+      console.error('Error fetching access token:', data);
+    }
   } catch (error) {
     console.error('Error fetching access token:', error);
-    alert('Không thể xác thực. Vui lòng thử lại!');
   }
 }
 
@@ -91,7 +103,7 @@ async function appendData(name, age, budget, hobby, suggestion) {
   }
 }
 
-// Khi submit form
+// Xử lý khi submit form
 document.getElementById('giftForm').addEventListener('submit', function(event) {
   event.preventDefault();
   const data = new FormData(event.target);
@@ -99,10 +111,17 @@ document.getElementById('giftForm').addEventListener('submit', function(event) {
   const age = data.get('age');
   const budget = data.get('budget');
   const hobby = data.get('hobby');
-  const suggestion = "Sách, phụ kiện thể thao, hoặc đồ công nghệ";
+  const suggestion = 'Sách, phụ kiện thể thao, hoặc đồ công nghệ';
 
   appendData(name, age, budget, hobby, suggestion);
 });
 
-// Khởi chạy khi tải trang
-window.onload = initGoogleSignIn;
+// Khởi chạy Google Sign-In khi tải trang
+window.onload = () => {
+  initGoogleSignIn();
+
+  const isLoggedIn = sessionStorage.getItem('loggedIn');
+  if (isLoggedIn) {
+    alert('Chào mừng trở lại!');
+  }
+};
